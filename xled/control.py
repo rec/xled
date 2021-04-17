@@ -47,14 +47,7 @@ class ControlInterface(object):
         self.host = host
         self.hw_address = hw_address
         self._session = None
-        self._base_url = None
-
-    @property
-    def base_url(self):
-        if not self._base_url:
-            self._base_url = "http://{}/xled/v1/".format(self.host)
-            assert self._base_url
-        return self._base_url
+        self.base_url = property("http://{0.host}/xled/v1/".format)
 
     @property
     def session(self):
@@ -80,10 +73,7 @@ class ControlInterface(object):
         :raises ApplicationError: on application error
         :rtype: :class:`~xled.response.ApplicationResponse`
         """
-        url = urljoin(self.base_url, "fw/0/update")
-        response = self.session.post(url, data=firmware)
-        app_response = ApplicationResponse(response)
-        return app_response
+        return self.send_post("fw/0/update", data=firmware)
 
     def firmware_1_update(self, firmware):
         """
@@ -93,10 +83,7 @@ class ControlInterface(object):
         :raises ApplicationError: on application error
         :rtype: :class:`~xled.response.ApplicationResponse`
         """
-        url = urljoin(self.base_url, "fw/1/update")
-        response = self.session.post(url, data=firmware)
-        app_response = ApplicationResponse(response)
-        return app_response
+        return self.send_post("fw/1/update", data=firmware)
 
     def firmware_update(self, stage0_sha1sum, stage1_sha1sum):
         """
@@ -113,10 +100,7 @@ class ControlInterface(object):
                 "stage1_sha1sum": stage1_sha1sum,
             }
         }
-        url = urljoin(self.base_url, "fw/update")
-        response = self.session.post(url, json=json_payload)
-        app_response = ApplicationResponse(response)
-        return app_response
+        return self.send_post("fw/update", json=json_payload)
 
     def firmware_version(self):
         """
@@ -125,10 +109,7 @@ class ControlInterface(object):
         :raises ApplicationError: on application error
         :rtype: :class:`~xled.response.ApplicationResponse`
         """
-        url = urljoin(self.base_url, "fw/version")
-        response = self.session.get(url)
-        app_response = ApplicationResponse(response)
-        return app_response
+        return self.send_get("fw/version")
 
     def get_brightness(self):
         """
@@ -137,9 +118,7 @@ class ControlInterface(object):
         :raises ApplicationError: on application error
         :rtype: :class:`~xled.response.ApplicationResponse`
         """
-        url = urljoin(self.base_url, "led/out/brightness")
-        response = self.session.get(url)
-        app_response = ApplicationResponse(response)
+        app_response = self.send_get("led/out/brightness")
         required_keys = [u"code", u"mode", u"value"]
         assert all(key in app_response.keys() for key in required_keys)
         return app_response
@@ -151,10 +130,7 @@ class ControlInterface(object):
         :raises ApplicationError: on application error
         :rtype: :class:`~xled.response.ApplicationResponse`
         """
-        url = urljoin(self.base_url, "gestalt")
-        response = self.session.get(url)
-        app_response = ApplicationResponse(response)
-        return app_response
+        return self.send_get("gestalt")
 
     def get_device_name(self):
         """
@@ -166,9 +142,7 @@ class ControlInterface(object):
         :return: current device name.
         :rtype: :class:`~xled.response.ApplicationResponse`
         """
-        url = urljoin(self.base_url, "device_name")
-        response = self.session.get(url)
-        app_response = ApplicationResponse(response)
+        app_response = self.send_get("device_name")
         required_keys = [u"code", u"name"]
         assert all(key in app_response.keys() for key in required_keys)
         return app_response
@@ -180,10 +154,7 @@ class ControlInterface(object):
         :raises ApplicationError: on application error
         :rtype: :class:`~xled.response.ApplicationResponse`
         """
-        url = urljoin(self.base_url, "network/status")
-        response = self.session.get(url)
-        app_response = ApplicationResponse(response)
-        return app_response
+        app_response = self.send_get("network/status")
 
     def get_mode(self):
         """
@@ -196,9 +167,7 @@ class ControlInterface(object):
             possible return values.
         :rtype: :class:`~xled.response.ApplicationResponse`
         """
-        url = urljoin(self.base_url, "led/mode")
-        response = self.session.get(url)
-        app_response = ApplicationResponse(response)
+        app_response = self.send_get("led/mode")
         required_keys = [u"code", u"mode"]
         assert all(key in app_response.keys() for key in required_keys)
         return app_response
@@ -213,9 +182,7 @@ class ControlInterface(object):
             explanation of return values.
         :rtype: :class:`~xled.response.ApplicationResponse`
         """
-        url = urljoin(self.base_url, "timer")
-        response = self.session.get(url)
-        app_response = ApplicationResponse(response)
+        app_response = self.send_get("timer")
         required_keys = [u"time_now", u"time_off", u"time_on", u"code"]
         assert all(key in app_response.keys() for key in required_keys)
         return app_response
@@ -227,9 +194,7 @@ class ControlInterface(object):
         :raises ApplicationError: on application error
         :rtype: :class:`~xled.response.ApplicationResponse`
         """
-        url = urljoin(self.base_url, "led/reset")
-        response = self.session.get(url)
-        return ApplicationResponse(response)
+        return self.send_get("led/reset")
 
     def network_scan(self):
         """
@@ -238,10 +203,10 @@ class ControlInterface(object):
         :raises ApplicationError: on application error
         :rtype: None
         """
-        url = urljoin(self.base_url, "network/scan")
-        response = self.session.get(url)
-        app_response = ApplicationResponse(response)
+        app_response = self.send_get("network/scan")
         assert list(app_response.keys()) == [u"code"]
+
+        return app_response
 
     def network_scan_results(self):
         """
@@ -250,10 +215,7 @@ class ControlInterface(object):
         :raises ApplicationError: on application error
         :rtype: :class:`~xled.response.ApplicationResponse`
         """
-        url = urljoin(self.base_url, "network/scan_results")
-        response = self.session.get(url)
-        app_response = ApplicationResponse(response)
-        return app_response
+        return self.send_get("network/scan_results")
 
     def set_brightness(self, brightness=None, enabled=True):
         """
@@ -272,12 +234,10 @@ class ControlInterface(object):
             json_payload = {"mode": "disabled"}
         if brightness is not None:
             json_payload["value"] = brightness
-        url = urljoin(self.base_url, "led/out/brightness")
-        response = self.session.post(url, json=json_payload)
-        app_response = ApplicationResponse(response)
+
+        app_response = self.send_get("network/scan", json=json_payload)
         required_keys = [u"code"]
         assert all(key in app_response.keys() for key in required_keys)
-        return app_response
 
     def set_device_name(self, name):
         """
@@ -289,9 +249,7 @@ class ControlInterface(object):
         """
         assert len(name) <= 32
         json_payload = {"name": name}
-        url = urljoin(self.base_url, "device_name")
-        response = self.session.post(url, json=json_payload)
-        app_response = ApplicationResponse(response)
+        app_response = self.send_get("device_name", json=json_payload)
         required_keys = [u"code"]
         assert all(key in app_response.keys() for key in required_keys)
 
@@ -310,9 +268,7 @@ class ControlInterface(object):
             "frames_number": frames_number,
             "leds_number": leds_number,
         }
-        url = urljoin(self.base_url, "led/movie/config")
-        response = self.session.post(url, json=json_payload)
-        return ApplicationResponse(response)
+        self.send_get("led/movie/config", json=json_payload)
 
     def set_mode(self, mode):
         """
@@ -407,6 +363,16 @@ class ControlInterface(object):
         app_response = ApplicationResponse(response)
         required_keys = [u"code"]
         assert all(key in app_response.keys() for key in required_keys)
+
+    def _post(self, path, **kwargs):
+        return self._send(self.session.post, path, **kwargs)
+
+    def _get(self, path, **kwargs):
+        return self._send(self.session.get, path, **kwargs)
+
+    def _send(self, sender, path, **kwargs):
+        url = urljoin(self.base_url, path)
+        return ApplicationResponse(sender(url, **kwargs))
 
 
 class HighControlInterface(ControlInterface):
