@@ -104,12 +104,7 @@ class ControlInterface(object):
         :raises ApplicationError: on application error
         :rtype: :class:`~xled.response.ApplicationResponse`
         """
-        url = urljoin(self.base_url, "status")
-        response = self.session.get(url)
-        app_response = ApplicationResponse(response)
-        required_keys = [u"code"]
-        assert all(key in app_response.keys() for key in required_keys)
-        return app_response
+        return self._get("status", "code")
 
     def delete_movies(self):
         """
@@ -120,12 +115,7 @@ class ControlInterface(object):
         :raises ApplicationError: on application error
         :rtype: :class:`~xled.response.ApplicationResponse`
         """
-        url = urljoin(self.base_url, "movies")
-        response = self.session.delete(url)
-        app_response = ApplicationResponse(response)
-        required_keys = [u"code"]
-        assert all(key in app_response.keys() for key in required_keys)
-        return app_response
+        return self._get("movies", "code")
 
     def delete_playlist(self):
         """
@@ -136,12 +126,7 @@ class ControlInterface(object):
         :raises ApplicationError: on application error
         :rtype: :class:`~xled.response.ApplicationResponse`
         """
-        url = urljoin(self.base_url, "playlist")
-        response = self.session.delete(url)
-        app_response = ApplicationResponse(response)
-        required_keys = [u"code"]
-        assert all(key in app_response.keys() for key in required_keys)
-        return app_response
+        return self._delete("playlist", "code")
 
     def firmware_0_update(self, firmware):
         """
@@ -151,10 +136,7 @@ class ControlInterface(object):
         :raises ApplicationError: on application error
         :rtype: :class:`~xled.response.ApplicationResponse`
         """
-        url = urljoin(self.base_url, "fw/0/update")
-        response = self.session.post(url, data=firmware)
-        app_response = ApplicationResponse(response)
-        return app_response
+        return self._post("fw/0/update", data=firmware)
 
     def firmware_1_update(self, firmware):
         """
@@ -164,10 +146,7 @@ class ControlInterface(object):
         :raises ApplicationError: on application error
         :rtype: :class:`~xled.response.ApplicationResponse`
         """
-        url = urljoin(self.base_url, "fw/1/update")
-        response = self.session.post(url, data=firmware)
-        app_response = ApplicationResponse(response)
-        return app_response
+        return self._post("fw/1/update", data=firmware)
 
     def firmware_update(self, stage0_sha1sum, stage1_sha1sum=None):
         """
@@ -191,10 +170,8 @@ class ControlInterface(object):
                     "stage0_sha1sum": stage0_sha1sum,
                 }
             }
-        url = urljoin(self.base_url, "fw/update")
-        response = self.session.post(url, json=json_payload)
-        app_response = ApplicationResponse(response)
-        return app_response
+
+        return self._post("fw/update", json=json_payload)
 
     def firmware_version(self):
         """
@@ -203,12 +180,7 @@ class ControlInterface(object):
         :raises ApplicationError: on application error
         :rtype: :class:`~xled.response.ApplicationResponse`
         """
-        url = urljoin(self.base_url, "fw/version")
-        response = self.session.get(url)
-        app_response = ApplicationResponse(response)
-        required_keys = [u"version", u"code"]
-        assert all(key in app_response.keys() for key in required_keys)
-        return app_response
+        return self._get("fw/version", u"version", u"code")
 
     def get_brightness(self):
         """
@@ -217,12 +189,7 @@ class ControlInterface(object):
         :raises ApplicationError: on application error
         :rtype: :class:`~xled.response.ApplicationResponse`
         """
-        url = urljoin(self.base_url, "led/out/brightness")
-        response = self.session.get(url)
-        app_response = ApplicationResponse(response)
-        required_keys = [u"code", u"mode", u"value"]
-        assert all(key in app_response.keys() for key in required_keys)
-        return app_response
+        return self._get("led/out/brightness", u"code", u"mode", u"value")
 
     def get_device_info(self):
         """
@@ -231,12 +198,8 @@ class ControlInterface(object):
         :raises ApplicationError: on application error
         :rtype: :class:`~xled.response.ApplicationResponse`
         """
-        url = urljoin(self.base_url, "gestalt")
-        response = self.session.get(url)
-        app_response = ApplicationResponse(response)
-        required_keys = [u"code"]  # and several more, dependent on fw version
-        assert all(key in app_response.keys() for key in required_keys)
-        return app_response
+        return self._get("gestalt", u"code")
+        # and several more, dependent on fw version
 
     def get_device_name(self):
         """
@@ -1717,3 +1680,20 @@ class HighControlInterface(ControlInterface):
     def set_static_color(self, red, green, blue):
         # This function can really be removed now, as there are several fuctions for creating patterns
         self.show_pattern(self.make_solid_pattern((red, green, blue)))
+
+    def _get(self, tag, *required_keys):
+        return self._response('get', tag, required_keys)
+
+    def _delete(self, tag, *required_keys):
+        return self._response('delete', tag, required_keys, {})
+
+    def _post(self, tag, *required_keys, **kwargs):
+        return self._response('delete', tag, required_keys, kwargs)
+
+    def _response(self, methodname, tag, required_keys, kwargs):
+        url = urljoin(self.base_url, tag)
+        method = getattr(self.session, methodname)
+        response = method(url, **kwargs)
+        app_response = ApplicationResponse(response)
+        assert all(key in app_response.keys() for key in required_keys)
+        return app_response
