@@ -868,6 +868,23 @@ class ControlInterface(object):
         assert all(key in app_response.keys() for key in required_keys)
         return app_response
 
+    def _get(self, tag, *required_keys):
+        return self._response('get', tag, required_keys)
+
+    def _delete(self, tag, *required_keys):
+        return self._response('delete', tag, required_keys, {})
+
+    def _post(self, tag, *required_keys, **kwargs):
+        return self._response('delete', tag, required_keys, kwargs)
+
+    def _response(self, methodname, tag, required_keys, kwargs):
+        url = urljoin(self.base_url, tag)
+        method = getattr(self.session, methodname)
+        response = method(url, **kwargs)
+        app_response = ApplicationResponse(response)
+        assert all(key in app_response.keys() for key in required_keys)
+        return app_response
+
 
 class HighControlInterface(ControlInterface):
     """
@@ -1626,20 +1643,3 @@ class HighControlInterface(ControlInterface):
     def set_static_color(self, red, green, blue):
         # This function can really be removed now, as there are several fuctions for creating patterns
         self.show_pattern(self.make_solid_pattern((red, green, blue)))
-
-    def _get(self, tag, *required_keys):
-        return self._response('get', tag, required_keys)
-
-    def _delete(self, tag, *required_keys):
-        return self._response('delete', tag, required_keys, {})
-
-    def _post(self, tag, *required_keys, **kwargs):
-        return self._response('delete', tag, required_keys, kwargs)
-
-    def _response(self, methodname, tag, required_keys, kwargs):
-        url = urljoin(self.base_url, tag)
-        method = getattr(self.session, methodname)
-        response = method(url, **kwargs)
-        app_response = ApplicationResponse(response)
-        assert all(key in app_response.keys() for key in required_keys)
-        return app_response
