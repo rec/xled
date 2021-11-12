@@ -324,12 +324,12 @@ class InterfaceAgent(object):
         if destination_host:
             udp = udp_client.UDPClient(
                 PING_PORT_NUMBER,
-                destination_host=destination_host,
-                receive_timeout=receive_timeout,
+                host=destination_host,
+                timeout=receive_timeout,
             )
         else:
             udp = udp_client.UDPClient(
-                PING_PORT_NUMBER, broadcast=True, receive_timeout=receive_timeout
+                PING_PORT_NUMBER, broadcast=True, timeout=receive_timeout
             )
         self.udp = udp
         #: Hash of known peers, fast lookup
