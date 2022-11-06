@@ -979,7 +979,7 @@ class HighControlInterface(ControlInterface):
         self.layout = False
         self.layout_bounds = False
         self.last_mode = None
-        self.last_rt_time = None
+        self.last_rt_time = 0
         self.curr_mode = self.get_mode()['mode']
 
     def update_firmware(self, stage0, stage1=None):
